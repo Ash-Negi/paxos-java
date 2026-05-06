@@ -1,7 +1,7 @@
 # paxos-java
 
-A Java implementation of Lamport's Paxos consensus algorithm. The protocol is a
-standalone library; a KV store and model checker are planned on top.
+A Java implementation of Lamport's Paxos consensus algorithm and a replicated
+key-value store on top of it. A model checker is planned next.
 
 New to the codebase? Start with the [code walkthrough](docs/code-walkthrough.md).
 
@@ -9,26 +9,31 @@ New to the codebase? Start with the [code walkthrough](docs/code-walkthrough.md)
 
 | Module | Purpose |
 | --- | --- |
-| [`paxos-core/`](paxos-core/) | The consensus protocol. Each peer is both proposer and acceptor; peers talk to each other over TCP. ~500 LOC, no runtime dependencies. |
-| [`server/`](server/) | HTTP demo driver — brings up a 3-peer cluster in one JVM and exposes `/propose`, `/status`, `/done`, `/min`, `/max`, `/cluster`. |
-| [`docs/`](docs/) | Protocol invariants, non-obvious design decisions, and a full code walkthrough — all with line-level links into the implementation. |
+| [`paxos-core/`](paxos-core/) | The consensus protocol. Each peer is both proposer and acceptor; peers talk over TCP. ~500 LOC, no runtime dependencies. |
+| [`kvstore/`](kvstore/) | Replicated key-value store layered on `paxos-core`. Handles client retries with at-most-once semantics. |
+| [`server/`](server/) | HTTP demo — brings up a 3-peer Paxos cluster in one JVM and exposes `/propose`, `/status`, `/done`, `/min`, `/max`, `/cluster`. |
+| [`docs/`](docs/) | Protocol invariants, design decisions, and a code walkthrough, with line-level links into the implementation. |
 
 ## Status
 
 - [x] Basic Paxos: Prepare, Accept, Decide phases
 - [x] Log compaction via `Done` / `Min` (peers gossip their done sequence)
 - [x] Failure tests: unreliable network, deaf peers, late-joining peers, RPC-count bounds
-- [ ] `kvstore/` — replicated key-value store on top of `paxos-core`
-- [ ] `checker/` — model checker exploring schedules to surface safety violations
+- [x] `kvstore/`: replicated key-value store with linearizable Get/Put and at-most-once Put
+- [ ] `checker/`: model checker exploring schedules to surface safety violations
 
 ## Tests
-
-Seven tests cover correctness under both happy-path and adversarial conditions
-(see [PaxosTest.java](paxos-core/src/test/java/paxos/PaxosTest.java)):
 
 ```
 mvn test
 ```
+
+- `paxos-core` — 7 tests covering happy-path agreement plus adversarial
+  conditions: unreliable networks, deaf peers, late-joining peers, RPC-count
+  bounds. See [PaxosTest.java](paxos-core/src/test/java/paxos/PaxosTest.java).
+- `kvstore` — 3 tests covering basic put/get, concurrent clients, and
+  unreliable-network behavior. See
+  [KVPaxosTest.java](kvstore/src/test/java/kvstore/KVPaxosTest.java).
 
 ## Run the demo
 
@@ -46,11 +51,13 @@ curl 'localhost:8080/status?seq=0&peer=0'
 
 ## Design notes
 
-[docs/code-walkthrough.md](docs/code-walkthrough.md) walks the code from the
-public API down to networking. [docs/paxos-protocol.md](docs/paxos-protocol.md)
-covers the trickier protocol decisions (proposal-number encoding, the `>=` vs
-`>` case in the acceptor, randomized backoff, garbage collection) with links
-into the specific lines.
+- [docs/code-walkthrough.md](docs/code-walkthrough.md) — the code from the
+  public API down to networking.
+- [docs/paxos-protocol.md](docs/paxos-protocol.md) — protocol-level decisions
+  (proposal-number encoding, `>=` vs `>` in the acceptor, randomized backoff,
+  garbage collection) with line-level links.
+- [docs/kvpaxos.md](docs/kvpaxos.md) — the kvstore layer (request dedup,
+  serialized agreement, catch-up, idempotency).
 
 ## Requirements
 

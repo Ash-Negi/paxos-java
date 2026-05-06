@@ -60,8 +60,8 @@ higher — otherwise a lagging peer could ask about it and get the wrong answer.
 
 ## Layers above the protocol
 
-- **kvstore** *(planned)* — replicated key-value store, uses `paxos-core` as
-  the consensus log.
+- **kvstore** — replicated key-value store using `paxos-core` as the
+  consensus log. See [kvpaxos.md](kvpaxos.md).
+- **server** — HTTP demo driver that brings up a 3-peer cluster in one JVM.
 - **checker** *(planned)* — model checker exploring schedules of Paxos
   instances to find safety violations.
-- **server** — HTTP demo driver that brings up a 3-peer cluster in one JVM.
