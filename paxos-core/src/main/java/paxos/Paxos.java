@@ -333,6 +333,7 @@ public class Paxos {
             }
 
             reply.done = peerDone.get(me);
+            //Check to see if you need to update self copy of peerDone Map for sender done value
             if (args.done > peerDone.get(args.sender)) peerDone.put(args.sender, args.done);
         } finally {
             mu.unlock();

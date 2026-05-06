@@ -10,6 +10,7 @@
     <modules>
         <module>paxos-core</module>
         <module>server</module>
+        <module>kvstore</module>
     </modules>
 
     <properties>
