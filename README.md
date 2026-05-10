@@ -22,6 +22,17 @@ New to the codebase? Start with the [code walkthrough](docs/code-walkthrough.md)
 - [x] `kvstore/`: replicated key-value store with linearizable Get/Put and at-most-once Put
 - [ ] `checker/`: model checker exploring schedules to surface safety violations
 
+## Roadmap
+
+Up next: [#1 sharded KV store](https://github.com/Ash-Negi/paxos-java/issues/1) and [#5 model checker](https://github.com/Ash-Negi/paxos-java/issues/5).
+
+- [#2](https://github.com/Ash-Negi/paxos-java/issues/2) WAL for crash-and-restart safety
+- [#3](https://github.com/Ash-Negi/paxos-java/issues/3) Log catch-up and snapshot transfer
+- [#4](https://github.com/Ash-Negi/paxos-java/issues/4) RocksDB instead of in-memory HashMap
+- [#6](https://github.com/Ash-Negi/paxos-java/issues/6) Prometheus metrics + Grafana dashboard
+- [#7](https://github.com/Ash-Negi/paxos-java/issues/7) REST API (Javalin)
+- [#8](https://github.com/Ash-Negi/paxos-java/issues/8) Kubernetes deployment on minikube
+
 ## Tests
 
 ```
