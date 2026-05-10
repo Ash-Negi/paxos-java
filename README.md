@@ -24,14 +24,19 @@ New to the codebase? Start with the [code walkthrough](docs/code-walkthrough.md)
 
 ## Roadmap
 
-Up next: [#1 sharded KV store](https://github.com/Ash-Negi/paxos-java/issues/1) and [#5 model checker](https://github.com/Ash-Negi/paxos-java/issues/5).
+**In progress**
+- Sharded KV store across multiple Paxos groups ([#1](https://github.com/Ash-Negi/paxos-java/issues/1))
+- Model checker for exhaustive schedule exploration ([#5](https://github.com/Ash-Negi/paxos-java/issues/5))
 
-- [#2](https://github.com/Ash-Negi/paxos-java/issues/2) WAL for crash-and-restart safety
-- [#3](https://github.com/Ash-Negi/paxos-java/issues/3) Log catch-up and snapshot transfer
-- [#4](https://github.com/Ash-Negi/paxos-java/issues/4) RocksDB instead of in-memory HashMap
-- [#6](https://github.com/Ash-Negi/paxos-java/issues/6) Prometheus metrics + Grafana dashboard
-- [#7](https://github.com/Ash-Negi/paxos-java/issues/7) REST API (Javalin)
-- [#8](https://github.com/Ash-Negi/paxos-java/issues/8) Kubernetes deployment on minikube
+**Durability and recovery**
+- Write-ahead log for crash safety ([#2](https://github.com/Ash-Negi/paxos-java/issues/2))
+- Embedded RocksDB in place of the in-memory map ([#4](https://github.com/Ash-Negi/paxos-java/issues/4))
+- Log catch-up and snapshot transfer for rejoining nodes ([#3](https://github.com/Ash-Negi/paxos-java/issues/3))
+
+**Operability**
+- Prometheus metrics and Grafana dashboard ([#6](https://github.com/Ash-Negi/paxos-java/issues/6))
+- REST API over the KV store ([#7](https://github.com/Ash-Negi/paxos-java/issues/7))
+- Kubernetes deployment on minikube ([#8](https://github.com/Ash-Negi/paxos-java/issues/8))
 
 ## Tests
 
