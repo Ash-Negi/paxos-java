@@ -476,14 +476,19 @@ public class Paxos {
     // Helpers
     // -----------------------------------------------------------------------
 
+    // Proposal numbers are bit-packed: [round (upper bits) | peerID (lower PEER_ID_BITS)].
+    // Embedding the peer ID guarantees no two peers can ever produce the same n,
+    // so we get global uniqueness without any cross-peer coordination.
     private static int generateUniqueN(int highestNSeen, int peerID) {
         int newID = (highestNSeen >> PEER_ID_BITS) + 1;
         return (newID << PEER_ID_BITS) | peerID;
     }
 
+    // addr is "host:port", e.g. "localhost:9000".
     private static int portOf(String addr) {
         return Integer.parseInt(addr.substring(addr.indexOf(':') + 1));
     }
+
     private static String host(String addr) {
         return addr.substring(0, addr.indexOf(':'));
     }

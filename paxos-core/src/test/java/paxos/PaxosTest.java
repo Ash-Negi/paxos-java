@@ -248,6 +248,141 @@ public class PaxosTest {
         }
     }
 
+    // Characterisation test: measures throughput and RPC cost as cluster size
+    // grows from 3 to 9. Always passes — it prints a table and exits.
+    //
+    // Expected pattern (mirrors the article's finding): throughput drops faster
+    // than network alone predicts because each extra node adds to the burst of
+    // simultaneous replies the leader must deserialise (pipeline saturation).
+    // Theoretical minimum RPCs/agreement with one proposer and no contention
+    // is 3*(N-1): N-1 Prepares + N-1 Accepts + N-1 Decides, all incoming at
+    // the acceptor peers. Self-calls bypass the TCP listener and are free.
+    @Test
+    void testScalabilityByClusterSize() throws IOException {
+        int[] sizes   = {3, 5, 7, 9};
+        int   ninst   = 20; // agreements per cluster size (after warmup)
+        int   warmup  = 5;
+
+        System.out.println();
+        System.out.println("=== Paxos scalability: RPC cost vs cluster size ===");
+        System.out.printf("%-6s  %-10s  %-16s  %-16s  %-12s  %s%n",
+                "N", "time(ms)", "agreements/sec", "RPCs/agreement",
+                "vs N=3", "theoretical min RPCs");
+        System.out.println("-".repeat(82));
+
+        double baselineThroughput = 1.0;
+
+        for (int n : sizes) {
+            String[] addrs = freeAddrs(n);
+            Paxos[]  pxa   = makeCluster(addrs);
+            try {
+                // Warmup: prime JIT and let TCP listener threads start.
+                for (int i = 0; i < warmup; i++) {
+                    pxa[0].start(i, "w" + i);
+                    waitn(pxa, i, n);
+                }
+
+                // Snapshot counts so warmup RPCs don't skew the measurement.
+                int[] before = new int[n];
+                for (int i = 0; i < n; i++) before[i] = pxa[i].rpcCount();
+
+                long t0 = System.currentTimeMillis();
+                for (int i = 0; i < ninst; i++) {
+                    int seq = warmup + i;
+                    pxa[0].start(seq, "v" + seq);
+                    waitn(pxa, seq, n);
+                }
+                long elapsed = System.currentTimeMillis() - t0;
+
+                int totalRpcs = 0;
+                for (int i = 0; i < n; i++) totalRpcs += pxa[i].rpcCount() - before[i];
+
+                double throughput      = ninst * 1000.0 / elapsed;
+                double rpcsPerAgreement = (double) totalRpcs / ninst;
+                int    theoretical      = 3 * (n - 1);
+
+                if (n == 3) baselineThroughput = throughput;
+                double relThroughput = throughput / baselineThroughput;
+
+                System.out.printf("%-6d  %-10d  %-16.1f  %-16.1f  %-12s  %d%n",
+                        n, elapsed, throughput, rpcsPerAgreement,
+                        String.format("%.2fx", relThroughput), theoretical);
+            } finally {
+                cleanup(pxa);
+            }
+        }
+        System.out.println();
+    }
+
+    // Contention variant: all N peers simultaneously propose *different* values
+    // for the same log slot, forcing retries. This is where the article's
+    // degradation curve actually appears — more peers means a bigger burst of
+    // simultaneous replies at every proposer, plus more retry collisions.
+    //
+    // Key metrics:
+    //   RPCs/agreement  — grows above the 3*(N-1) no-contention floor with each retry
+    //   contention overhead  — actual / theoretical; shows how much extra work
+    //                          contention adds per extra node
+    @Test
+    void testScalabilityUnderContention() throws IOException {
+        int[] sizes  = {3, 5, 7, 9};
+        int   ninst  = 10; // fewer rounds: each can be expensive under contention
+        int   warmup = 3;
+
+        System.out.println();
+        System.out.println("=== Paxos scalability under contention (all N peers propose per slot) ===");
+        System.out.printf("%-6s  %-10s  %-16s  %-16s  %-10s  %s%n",
+                "N", "time(ms)", "agreements/sec", "RPCs/agreement",
+                "vs N=3", "contention overhead");
+        System.out.println("-".repeat(82));
+
+        double baselineThroughput = 1.0;
+
+        for (int n : sizes) {
+            String[] addrs = freeAddrs(n);
+            Paxos[]  pxa   = makeCluster(addrs);
+            try {
+                // Warmup with single proposer — avoids charging contention cost
+                // to JIT / connection setup, not to the algorithm.
+                for (int i = 0; i < warmup; i++) {
+                    pxa[0].start(i, "w" + i);
+                    waitn(pxa, i, n);
+                }
+
+                int[] before = new int[n];
+                for (int i = 0; i < n; i++) before[i] = pxa[i].rpcCount();
+
+                long t0 = System.currentTimeMillis();
+                for (int round = 0; round < ninst; round++) {
+                    int seq = warmup + round;
+                    // All N peers propose a distinct value — guaranteed first-round
+                    // collision on every slot, so the proposer that loses must retry.
+                    for (int i = 0; i < n; i++) pxa[i].start(seq, n * seq + i);
+                    waitn(pxa, seq, n);
+                }
+                long elapsed = System.currentTimeMillis() - t0;
+
+                int totalRpcs = 0;
+                for (int i = 0; i < n; i++) totalRpcs += pxa[i].rpcCount() - before[i];
+
+                double throughput       = ninst * 1000.0 / elapsed;
+                double rpcsPerAgreement = (double) totalRpcs / ninst;
+                int    theoretical      = 3 * (n - 1);
+                double overhead         = rpcsPerAgreement / theoretical;
+
+                if (n == 3) baselineThroughput = throughput;
+                double relThroughput = throughput / baselineThroughput;
+
+                System.out.printf("%-6d  %-10d  %-16.1f  %-16.1f  %-10s  %.2fx (floor=%d)%n",
+                        n, elapsed, throughput, rpcsPerAgreement,
+                        String.format("%.2fx", relThroughput), overhead, theoretical);
+            } finally {
+                cleanup(pxa);
+            }
+        }
+        System.out.println();
+    }
+
     @Test
     void testRpcCount() throws IOException {
         final int n = 3, ninst1 = 5;
