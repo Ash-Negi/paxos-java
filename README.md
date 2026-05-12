@@ -13,6 +13,7 @@ New to the codebase? Start with the [code walkthrough](docs/code-walkthrough.md)
 | [`kvstore/`](kvstore/) | Replicated key-value store layered on `paxos-core`. Handles client retries with at-most-once semantics. |
 | [`server/`](server/) | HTTP demo — brings up a 3-peer Paxos cluster in one JVM and exposes `/propose`, `/status`, `/done`, `/min`, `/max`, `/cluster`. |
 | [`docs/`](docs/) | Protocol invariants, design decisions, and a code walkthrough, with line-level links into the implementation. |
+| [`bench/`](bench/) | Scalability experiment: measures RPC cost and throughput at N=3–9 with and without proposer contention. Includes a Python script that generates the result charts. |
 
 ## Status
 
@@ -44,9 +45,11 @@ New to the codebase? Start with the [code walkthrough](docs/code-walkthrough.md)
 mvn test
 ```
 
-- `paxos-core` — 7 tests covering happy-path agreement plus adversarial
+- `paxos-core` — 9 tests covering happy-path agreement plus adversarial
   conditions: unreliable networks, deaf peers, late-joining peers, RPC-count
-  bounds. See [PaxosTest.java](paxos-core/src/test/java/paxos/PaxosTest.java).
+  bounds, and two scalability characterization tests that measure RPC cost and
+  throughput at cluster sizes N=3–9 with and without proposer contention. See
+  [PaxosTest.java](paxos-core/src/test/java/paxos/PaxosTest.java).
 - `kvstore` — 3 tests covering basic put/get, concurrent clients, and
   unreliable-network behavior. See
   [KVPaxosTest.java](kvstore/src/test/java/kvstore/KVPaxosTest.java).
