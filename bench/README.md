@@ -1,7 +1,7 @@
 # bench/ — scalability experiment
 
 Reproduces the throughput and RPC-cost curves for `paxos-core` as cluster size
-grows from N=3 to N=9, with and without proposer contention. The Java tests
+grows from N=3 to N=13, with and without proposer contention. The Java tests
 produce the raw numbers; the Python script renders them as charts.
 
 ## Run the experiment
@@ -31,11 +31,11 @@ Writes two PNGs into this directory:
   minimum of `3·(N−1)`. The gap widens with N, showing wasted work from
   failed Prepares and retries.
 - `throughput_vs_cluster_size.png` — agreements/sec for both runs. Baseline
-  is flat; contention falls off a cliff at N=9.
+  is flat; contention drops ~60% by N=13.
 
 ## What the charts show
 
-Under a single proposer, throughput is roughly constant from N=3 to N=9 —
+Under a single proposer, throughput is roughly constant from N=3 to N=13 —
 loopback TCP is fast, so adding peers doesn't meaningfully slow each round.
 RPCs/agreement sit exactly at `3·(N−1)`.
 

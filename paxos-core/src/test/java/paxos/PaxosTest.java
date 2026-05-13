@@ -1,6 +1,8 @@
 package paxos;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -185,7 +187,19 @@ public class PaxosTest {
 
     @Test
     void testMany() throws IOException {
-        final int n = 3, ninst = 30;
+        runMany(3, 30);
+    }
+
+    // Same contention pattern at larger cluster sizes.
+    // 11 and 13 peers means more proposers racing per sequence number,
+    // which exercises the backoff and proposal-number generation more heavily.
+    @ParameterizedTest(name = "testManyPeers n={0}")
+    @ValueSource(ints = {11, 13})
+    void testManyPeers(int n) throws IOException {
+        runMany(n, 30);
+    }
+
+    private void runMany(int n, int ninst) throws IOException {
         String[] addrs = freeAddrs(n);
         Paxos[] pxa = makeCluster(addrs);
         try {
@@ -259,7 +273,7 @@ public class PaxosTest {
     // the acceptor peers. Self-calls bypass the TCP listener and are free.
     @Test
     void testScalabilityByClusterSize() throws IOException {
-        int[] sizes   = {3, 5, 7, 9};
+        int[] sizes   = {3, 5, 7, 9, 11, 13};
         int   ninst   = 20; // agreements per cluster size (after warmup)
         int   warmup  = 5;
 
@@ -325,7 +339,7 @@ public class PaxosTest {
     //                          contention adds per extra node
     @Test
     void testScalabilityUnderContention() throws IOException {
-        int[] sizes  = {3, 5, 7, 9};
+        int[] sizes  = {3, 5, 7, 9, 11, 13};
         int   ninst  = 10; // fewer rounds: each can be expensive under contention
         int   warmup = 3;
 

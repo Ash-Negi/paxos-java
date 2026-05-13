@@ -15,18 +15,18 @@ Outputs two PNGs in bench/:
 import os
 import matplotlib.pyplot as plt
 
-SIZES = [3, 5, 7, 9]
+SIZES = [3, 5, 7, 9, 11, 13]
 
 # From testScalabilityByClusterSize (single proposer, no contention)
 BASELINE = {
-    "throughput":      [72.5, 81.3, 82.6, 79.7],  # agreements/sec
-    "rpcs_per_agree":  [6.0, 12.0, 18.0, 24.0],
+    "throughput":      [81.6, 81.0, 81.3, 79.7, 79.7, 81.0],  # agreements/sec
+    "rpcs_per_agree":  [6.0, 12.0, 18.0, 24.0, 30.0, 36.0],
 }
 
 # From testScalabilityUnderContention (all N peers propose per slot)
 CONTENTION = {
-    "throughput":      [79.4, 78.7, 78.1, 45.9],
-    "rpcs_per_agree":  [10.6, 33.2, 61.8, 105.6],
+    "throughput":      [81.3, 79.4, 78.1, 47.8, 49.8, 32.2],
+    "rpcs_per_agree":  [11.2, 32.4, 61.8, 104.0, 156.0, 201.6],
 }
 
 THEORETICAL_MIN = [3 * (n - 1) for n in SIZES]
@@ -64,10 +64,10 @@ def plot_rpcs():
     ax.set_xticks(SIZES)
     ax.legend(loc="upper left", frameon=False)
 
-    # Annotate the gap at N=9
+    # Annotate the gap at the largest cluster size
     ax.annotate(f"{CONTENTION['rpcs_per_agree'][-1]:.0f} actual\nvs {THEORETICAL_MIN[-1]} minimum",
-                xy=(9, CONTENTION["rpcs_per_agree"][-1]),
-                xytext=(7.2, 80),
+                xy=(SIZES[-1], CONTENTION["rpcs_per_agree"][-1]),
+                xytext=(9, 130),
                 fontsize=10, color="#2c3e50",
                 arrowprops=dict(arrowstyle="->", color="#7f8c8d", lw=1))
 
@@ -94,11 +94,11 @@ def plot_throughput():
     ax.set_ylim(0, max(BASELINE["throughput"]) * 1.15)
     ax.legend(loc="lower left", frameon=False)
 
-    # Annotate the cliff
+    # Annotate the total drop from N=3 to N=13
     drop_pct = (1 - CONTENTION["throughput"][-1] / CONTENTION["throughput"][0]) * 100
-    ax.annotate(f"−{drop_pct:.0f}% throughput",
-                xy=(9, CONTENTION["throughput"][-1]),
-                xytext=(7.4, 30),
+    ax.annotate(f"−{drop_pct:.0f}% throughput\nby N={SIZES[-1]}",
+                xy=(SIZES[-1], CONTENTION["throughput"][-1]),
+                xytext=(9, 20),
                 fontsize=10, color="#c0392b",
                 arrowprops=dict(arrowstyle="->", color="#c0392b", lw=1))
 
