@@ -59,7 +59,7 @@ def plot_rpcs():
 
     ax.set_xlabel("Cluster size (N)")
     ax.set_ylabel("RPCs per agreement")
-    ax.set_title("RPC cost grows super-linearly under contention",
+    ax.set_title("RPC cost grows under contention",
                  fontsize=14, pad=15)
     ax.set_xticks(SIZES)
     ax.legend(loc="upper left", frameon=False)
@@ -88,7 +88,7 @@ def plot_throughput():
 
     ax.set_xlabel("Cluster size (N)")
     ax.set_ylabel("Agreements per second")
-    ax.set_title("Throughput cliff at N=9 — only under contention",
+    ax.set_title("Throughput cliff — only under contention",
                  fontsize=14, pad=15)
     ax.set_xticks(SIZES)
     ax.set_ylim(0, max(BASELINE["throughput"]) * 1.15)
