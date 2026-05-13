@@ -68,6 +68,43 @@ curl -X POST localhost:8080/propose -d '{"seq":0,"value":"hello","peer":0}'
 curl 'localhost:8080/status?seq=0&peer=0'
 ```
 
+## Run on Kubernetes (minikube)
+
+Brings up a 3-peer Paxos cluster as a StatefulSet, one peer per pod. Pods
+discover each other via the headless `paxos` Service; clients hit any peer
+through the load-balanced `paxos-client` Service. There is no persistent
+storage yet — pod restarts wipe Paxos state (tracked in
+[#2](https://github.com/Ash-Negi/paxos-java/issues/2) and
+[#4](https://github.com/Ash-Negi/paxos-java/issues/4)).
+
+```
+# Build the image inside minikube's Docker daemon so the cluster can pull it.
+minikube start
+eval $(minikube docker-env)
+docker build -t paxos-server:latest .
+
+# Deploy.
+kubectl apply -f k8s/
+
+# Watch pods come up.
+kubectl get pods -l app=paxos -w
+
+# Drive the cluster.
+minikube service paxos-client --url
+# -> http://127.0.0.1:<port>
+curl -X POST http://127.0.0.1:<port>/propose -d '{"seq":0,"value":"hello"}'
+curl "http://127.0.0.1:<port>/status?seq=0"
+```
+
+In Kubernetes mode each pod serves only its own peer — the `peer` field in
+requests is optional and ignored when set. The `paxos-client` service spreads
+requests across pods; for inspecting a specific peer, port-forward:
+`kubectl port-forward paxos-1 8080:8080`.
+
+To scale, edit the `replicas` field in [k8s/statefulset.yaml](k8s/statefulset.yaml)
+and the `PEERS` list in [k8s/configmap.yaml](k8s/configmap.yaml) to match,
+then re-apply.
+
 ## Design notes
 
 - [docs/code-walkthrough.md](docs/code-walkthrough.md) — the code from the

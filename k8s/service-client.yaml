@@ -1,0 +1,15 @@
+# Client-facing service. Load-balances HTTP requests across all peers — any
+# peer can serve /propose, /status, etc. Use NodePort so `minikube service`
+# can surface it on the host.
+apiVersion: v1
+kind: Service
+metadata:
+  name: paxos-client
+spec:
+  type: NodePort
+  selector:
+    app: paxos
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080

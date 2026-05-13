@@ -1,0 +1,10 @@
+# Peer addresses for the cluster. Each entry is the in-cluster DNS name of a
+# pod, exposed by the headless Service "paxos". Pods reach each other on the
+# Paxos RPC port (9100). Update PEERS if you scale the StatefulSet.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paxos-config
+data:
+  PEERS: "paxos-0.paxos:9100,paxos-1.paxos:9100,paxos-2.paxos:9100"
+  HTTP_PORT: "8080"

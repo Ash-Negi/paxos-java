@@ -1,0 +1,55 @@
+# One pod per Paxos peer. StatefulSet gives each pod a stable ordinal
+# (paxos-0, paxos-1, paxos-2) which we use as PEER_INDEX. The headless
+# service "paxos" provides DNS for pod-to-pod RPCs.
+#
+# NOTE: there's no persistent storage here yet — pod restarts wipe Paxos
+# state. Persistence (WAL + RocksDB) is tracked in issues #2 and #4 and
+# will be wired in via volumeClaimTemplates once those land.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: paxos
+spec:
+  serviceName: paxos
+  replicas: 3
+  selector:
+    matchLabels:
+      app: paxos
+  template:
+    metadata:
+      labels:
+        app: paxos
+    spec:
+      terminationGracePeriodSeconds: 5
+      containers:
+        - name: paxos
+          image: paxos-server:latest
+          imagePullPolicy: IfNotPresent
+          # Extract the ordinal from HOSTNAME (e.g. "paxos-1" -> "1") and pass
+          # it to the JVM as PEER_INDEX. The PEERS list comes from the ConfigMap.
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              export PEER_INDEX="${HOSTNAME##*-}"
+              echo "Starting peer ${PEER_INDEX} with PEERS=${PEERS}"
+              exec java -jar /app/server.jar
+          envFrom:
+            - configMapRef:
+                name: paxos-config
+          ports:
+            - name: paxos-rpc
+              containerPort: 9100
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
