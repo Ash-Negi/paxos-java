@@ -1,0 +1,18 @@
+# Headless service: gives each StatefulSet pod a stable DNS name of the form
+# paxos-N.paxos.<namespace>.svc.cluster.local. Peers use these names to talk
+# to each other for Paxos RPCs.
+apiVersion: v1
+kind: Service
+metadata:
+  name: paxos
+spec:
+  clusterIP: None
+  selector:
+    app: paxos
+  ports:
+    - name: paxos-rpc
+      port: 9100
+      targetPort: 9100
+    - name: http
+      port: 8080
+      targetPort: 8080
