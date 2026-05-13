@@ -55,7 +55,7 @@ def plot_rpcs():
             label="Under contention (all N peers propose)")
     ax.plot(SIZES, THEORETICAL_MIN, "s--",
             color="#7f8c8d", linewidth=2, markersize=7,
-            label="Theoretical minimum: 3·(N−1)")
+            label="Minimum (no contention): 3·(N−1)")
 
     ax.set_xlabel("Cluster size (N)")
     ax.set_ylabel("RPCs per agreement")
